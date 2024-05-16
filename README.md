@@ -18,30 +18,76 @@ The following features in libcurl have been implemented:
 The source code needs to be compiled and installed into an existing GT.M/YDB
 instance. Right now, you just need to download the repository
 
-## Install
-After downloading the software, you need to set your `gtm_dist` environment
-variable and type `make install` as root (or can do `sudo -E make install`)
-inside the libcurl directory. Here's some sample output:
-
-``` 
-saichiko:libcurl sam$ sudo -E make install
-cc -Wall -O3 -I/usr/local/lib/yottadb-r123-x86_64-debug/ -fPIC   -c -o libcurl_ydb_wrapper.o libcurl_ydb_wrapper.c
-cc -o libcurl_ydb_wrapper.so libcurl_ydb_wrapper.o -shared -lcurl
-echo './libcurl_ydb_wrapper.so' > libcurl_ydb_wrapper.xc
-cat libcurl_ydb_wrapper.xc_proto >> libcurl_ydb_wrapper.xc
-cp libcurl_ydb_wrapper.so /usr/local/lib/yottadb-r123-x86_64-debug//plugin
-echo '$gtm_dist/plugin/libcurl_ydb_wrapper.so' > /usr/local/lib/yottadb-r123-x86_64-debug//plugin/curl_ydb_wrapper.xc
-cat libcurl_ydb_wrapper.xc_proto >> /usr/local/lib/yottadb-r123-x86_64-debug//plugin/libcurl_ydb_wrapper.xc
-chmod a-w /usr/local/lib/yottadb-r123-x86_64-debug//plugin/libcurl_ydb_wrapper.so /usr/local/lib/yottadb-r123-x86_64-debug//plugin/libcurl_ydb_wrapper.xc
-echo 'Put this in your env file: '
-Put this in your env file:
-echo 'export GTMXC_libcurl="/usr/local/lib/yottadb-r123-x86_64-debug//plugin/libcurl_ydb_wrapper.xc"'
-export GTMXC_libcurl="/usr/local/lib/yottadb-r123-x86_64-debug//plugin/libcurl_ydb_wrapper.xc"
+## Prerequisites
+For Ubuntu/Debian
+```
+$ sudo apt update
+$ sudo apt install -y git cmake make pkg-config libicu-dev libcurl4-openssl-dev
 ```
 
-As it tells you, you need to add an environment variable to your GT.M/YDB
-install: it's ``GTMXC_libcurl``. The above is a sample; the installer will give
-you the actual value to put in.
+For Rocky linux
+```
+$ sudo yum update
+$ sudo yum install -y git cmake make pkg-config libicu-devel libcurl-devel gcc
+```
+
+## Install
+YottaDB must be installed and available before installing YDBCurl plugin. https://yottadb.com/product/get-started/ 
+has instructions on installing YottaDB. After that, do the following steps to install YDBCurl plugin:
+```
+$ cd /tmp
+$ git clone https://gitlab.com/YottaDB/Util/YDBCurl.git
+$ cd YDBCurl
+$ mkdir build && cd build
+$ cmake ..
+-- YDBCMake Source Directory: /tmp/YDBCurl/build/_deps/ydbcmake-src
+-- Build type: RelWithDebInfo
+-- Setting locale to C.utf8
+-- Found YOTTADB: /opt/yottadb/current/libyottadb.so
+-- Install Location: /opt/yottadb/current/plugin
+-- Found CURL: /usr/lib/aarch64-linux-gnu/libcurl.so (found version "7.81.0")
+-- Found CURL version: 7.81.0
+-- Using CURL include dir(s): /usr/include/aarch64-linux-gnu
+-- Using CURL lib(s): /usr/lib/aarch64-linux-gnu/libcurl.so
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /tmp/YDBCurl/build
+
+$ make
+[ 10%] Building C object CMakeFiles/curl.dir/libcurl.c.o
+[ 20%] Linking C shared library libcurl.so
+[ 20%] Built target curl
+Scanning dependencies of target libcurltestM
+[ 30%] Building M object CMakeFiles/libcurltestM.dir/r/_ut.m.o
+[ 40%] Building M object CMakeFiles/libcurltestM.dir/r/_ut1.m.o
+[ 50%] Building M object CMakeFiles/libcurltestM.dir/r/libcurlPluginTests.m.o
+[ 60%] Linking M shared library libcurltest.so
+[ 60%] Built target libcurltestM
+Scanning dependencies of target libcurltestutf8
+[ 70%] Building M object CMakeFiles/libcurltestutf8.dir/r/_ut.m.o
+[ 80%] Building M object CMakeFiles/libcurltestutf8.dir/r/_ut1.m.o
+[ 90%] Building M object CMakeFiles/libcurltestutf8.dir/r/libcurlPluginTests.m.o
+[100%] Linking M shared library utf8/libcurltest.so
+[100%] Built target libcurltestutf8
+
+[(optional to test functionality)] make test ARGS="-V"
+
+$ sudo make install
+Consolidate compiler generated dependencies of target curl
+[ 20%] Built target curl
+[ 60%] Built target libcurltestM
+[100%] Built target libcurltestutf8
+Install the project...
+-- Install configuration: "RelWithDebInfo"
+-- Installing: /opt/yottadb/current/plugin/libcurl.so
+-- Installing: /opt/yottadb/current/plugin/libcurl.xc 
+```
+
+After installation, you need to add an environment variable to your GT.M/YDB
+install like this: 
+```
+export ydb_xc_libcurl=${ydb_dist}/plugin/libcurl.xc
+```
 
 ## External Documentation
 This project relies on libcurl (https://curl.haxx.se/). While you probably won't
@@ -244,53 +290,46 @@ The only way to trap errors is with an M error trap, as an error status runs the
 This one is pretty obvious: This library uses libcurl; and runs on GT.M or YottaDB.
 
 ## Unit Tests
-Running `make test` will run the Unit Tests. I am having difficulty with TCERT2
-running consistently between platforms; it's disabled on Darwin for now but
-enabled on Linux and Cygwin. Openssl may ask for a password when generating a
-certificate even when supplied on the command line. In any case, if that test
-fails for you, you can disable it by changing the @TEST to #TEST.
-
+Running `make test` will run the Unit Tests (Enable verbose output with `make test ARGS="-V"`)
 ```
  ----------------------------- libcurlPluginTests -----------------------------
-T1 - curl GET https://example.com...--------------------------  [OK]   94.516ms
-T2 - curl GET https://rxnav.nlm.nih.gov/REST/rxcui/351772/allndcs.json...
- -------------------------------------------------------------  [OK]  258.718ms
-T3 - curl GET https://rxnav.nlm.nih.gov/REST/rxcui/174742/related.json?rela=tradename_of+has_precise_ingredient...
- -------------------------------------------------------------  [OK]  149.587ms
-T4 - init, cleanup runs w/o errors----------------------------  [OK]    1.784ms
-T5 - do GET https://example.com...----------------------------  [OK]   70.650ms
-TMI - Multiple GETs from Single Domain - Init-----------------  [OK]    1.559ms
-TM1 - Multiple GETs from Single Domain - First.---------------  [OK]  163.308ms
-TM2 - Multiple GETs from Single Domain - Second.--------------  [OK]   17.811ms
-TM3 - Multiple GETs from Single Domain - Third.---------------  [OK]   12.817ms
-TM4 - Multiple GETs from Single Domain - Fourth.--------------  [OK]   30.389ms
-TM5 - Multiple GETs from Single Domain - Fifth.---------------  [OK]   15.744ms
-TM6 - Mulitple GETs from Single Domain - Sixth.---------------  [OK]   64.836ms
-TMC - Multiple GETs from Single Domain - Cleanup--------------  [OK]    1.371ms
-TPAY - Test Payload...----------------------------------------  [OK]  228.651ms
-TPAYMIME - Test Payload with mime type...---------------------  [OK]   95.221ms
-TTO - do GET https://example.com with timeout...--------------  [OK]   71.703ms
-THGET - do GET https://example.com with headers....-----------  [OK]   70.742ms
-THSEND - do Send Custom Headers..-----------------------------  [OK]   80.103ms
-TB100 - curl 100 bytes of binary data...----------------------  [OK]   86.745ms
-TB1M - curl with >1M bytes of binary dataWeb Service return greater than GTM/YDB Max String Size 1048576---------------------  [OK]  825.846ms
-TBAUTH - Basic authoriazation...------------------------------  [OK]  175.201ms
+T1 - curl GET https://example.com-----------------------------  [OK]  886.507ms
+T2 - curl GET https://rxnav.nlm.nih.gov/REST/rxcui/351772/allndcs.json
+ -------------------------------------------------------------  [OK] 1275.135ms
+T3 - curl GET https://rxnav.nlm.nih.gov/REST/rxcui/174742/related.json?rela=tradename_of+has_precise_ingredient
+ -------------------------------------------------------------  [OK] 1272.039ms
+T4 - init, cleanup runs w/o errors----------------------------  [OK]    0.850ms
+T5 - do GET https://example.com-------------------------------  [OK]  907.199ms
+TMI - Multiple GETs from Single Domain - Init-----------------  [OK]    0.747ms
+TM1 - Multiple GETs from Single Domain - First----------------  [OK] 1261.235ms
+TM2 - Multiple GETs from Single Domain - Second---------------  [OK]  301.800ms
+TM3 - Multiple GETs from Single Domain - Third----------------  [OK]  297.700ms
+TM4 - Multiple GETs from Single Domain - Fourth---------------  [OK]  307.285ms
+TM5 - Multiple GETs from Single Domain - Fifth----------------  [OK]  328.149ms
+TM6 - Mulitple GETs from Single Domain - Sixth----------------  [OK]  308.404ms
+TMC - Multiple GETs from Single Domain - Cleanup--------------  [OK]    3.324ms
+TPAY - Test Payload-------------------------------------------  [OK] 1264.725ms
+TPAY0 - Test empty payload------------------------------------  [OK] 1186.992ms
+TPAYMIME - Test Payload with mime type------------------------  [OK] 1448.612ms
+TTO - do GET https://example.com with full timeout in seconds-  [OK]  887.020ms
+TCTO - do GET https://example.com with connect timeout in milliseconds
+ -------------------------------------------------------------  [OK]    4.447ms
+THGET - do GET https://example.com with headers---------------  [OK]  910.511ms
+THSEND - do Send Custom Headers-------------------------------  [OK] 1205.325ms
+TB100 - curl 100 bytes of binary data-------------------------  [OK] 1193.716ms
+TB1M - curl with >1M bytes of binary dataWeb Service return greater than GTM/YDB Max String Size 1048576---------------------  [OK] 2300.454ms
+TBAUTH - Basic authoriazation---------------------------------  [OK] 2416.879ms
 TCERT1 - Test TLS with a client certificate no key password
-
-Generating a RSA private key
-............................+++++
-.................+++++
-writing new private key to '/tmp/mycert.key'
+..+..+.........+++++++++++++
+......+......+............+.
 -----
-Generating a RSA private key
-.......+++++
-...............+++++
-writing new private key to '/tmp/client.key'
+.....+.+...........+........
+......++++++++++++++++++++++
 -----
-Signature ok
-subject=/C=US/ST=Washington/L=Seattle/CN=www.smh101.com
-Getting CA Private Key
-..------------------------------------------------------------  [OK] 1886.440ms
+Certificate request self-signature ok
+subject=C = US, ST = Washington, L = Seattle, CN = www.smh101.com
+--------------------------------------------------------------  [OK] 2356.622ms
+TCERT2 - Test TLS with a client certifiate with key password--  [OK]  486.513ms
 ```
 ## Future Work
 At some point I have to stop working and make a release; there are a lot more

@@ -1,5 +1,5 @@
-%ut ;VEN-SMH/JLI - PRIMARY PROGRAM FOR M-UNIT TESTING ;2018-05-03  5:21 PM
- ;;1.5;MASH UTILITIES;;Jul 8, 2017;Build 13
+%ut ;VEN-SMH/JLI - PRIMARY PROGRAM FOR M-UNIT TESTING ;2019-08-29  4:29 PM 
+ ;;1.62;M-UNIT;;Feb 10 2020
  ; Submitted to OSEHRA Jul 8, 2017 by Joel L. Ivey under the Apache 2 license (http://www.apache.org/licenses/LICENSE-2.0.html)
  ; Original routine authored by Joel L. Ivey as XTMUNIT while working for U.S. Department of Veterans Affairs 2003-2012
  ; Includes addition of %utVERB and %utBREAK arguments and code related to them as well as other substantial additions authored by Sam Habiel 07/2013-04/2014
@@ -13,19 +13,22 @@
  ; Contributions by Dr. Sam Habiel (SMH)
  ;   older comments moved to %utcover due to space requirements
  ;
+ ; Minor changes to remove globals - Copyright (c) 2022 YottaDB LLC
+ ;
  ; For a list of changes in this version in this routine see tag %ut in routine %utt2
  ;
  D ^%utt6 ; runs unit tests on all of it
  Q
  ;
+en(%utRNAM,%utVERB,%utBREAK) ; Rename of EN
+ D EN($G(%utRNAM),$G(%utVERB),$G(%utBREAK))
+ QUIT
 EN(%utRNAM,%utVERB,%utBREAK) ; .SR Entry point with primary test routine name
  ; %utRNAM: (Required) Routine name that contians the tags with @TEST in them or the tag XTROU
  ; %utVERB: (optional) 1 for verbose output or for verbose and timing info 2 (milliseconds) or 3 (microseconds).
  ; %utBREAK:(optional) bool - Break upon error or upon failure
- N %utLIST,%utROU,%ut,%utIO
- S %utLIST=1,%utROU(%utLIST)=%utRNAM,%utIO=$S($D(IO)#2:IO,1:$PRINCIPAL)
- N IO S IO=%utIO
- ; K ^TMP("%ut",$J,"UTVALS")
+ N %utLIST,%utROU,%ut
+ S %utLIST=1,%utROU(%utLIST)=%utRNAM
  D SETUT
  D EN1(.%utROU,%utLIST)
  Q
@@ -55,7 +58,7 @@ EN1(%utROU,%utLIST) ;
  ; ZEXCEPT: %ut  -- NEWED IN EN
  ; ZEXCEPT: GetCPUTime,Process -- parts of Cache method names
  ; ZEXCEPT: IOM - if present margin width defined by Kernel
- N %utERRL,%utK,%utI,%utJ,%utSTRT,%utONLY,%utROU1
+ N %utERRL,%utK,%utI,%utJ,%utSTRT,%utONLY,%utROU1,I
  ; ZEXCEPT: %utVERB   -- ARGUMENT TO EN
  I '+$G(%utVERB) S %utVERB=0
  ;
@@ -120,26 +123,18 @@ EN1(%utROU,%utLIST) ;
  . . S %ut("ENT")=%utETRY(%utI)_"^"_%utROU(%ut("CURR"))
  . . I %utVERB,'$D(%utGUI) D VERBOSE1(.%utETRY,%utI)
  . . ;
- . . I $$GETSYS()=47,%utVERB=3,'($$GTMVER()>6.2) S %utVERB=2 ; give ms instead of zeros if not supported
- . . I %utVERB=2 N %utStart D  ; Time Start
- . . . I $$GETSYS()=0  S %utStart=$P($SYSTEM.Process.GetCPUTime(),",")+$P($SYSTEM.Process.GetCPUTime(),",",2)
- . . . I $$GETSYS()=47 S %utStart=$ZGETJPI("","CPUTIM")*10
- . . ;
- . . I %utVERB=3 N %utStart D  ; Time Start
- . . . I $$GETSYS()=0 S %utStart=$P($NOW(),",",2)
- . . . I $$GETSYS()=47 N V S V=$$GTMVER(0),%utStart=$s(V>6.2:$ZH,1:0)
+ . . ; Start Time
+ . . N %utStart
+ . . I %utVERB=2 S %utStart=$ZGETJPI("","CPUTIM")*10
+ . . I %utVERB=3 S %utStart=$ZH
  . . ;
  . . ; Run the test!
  . . D @%ut("ENT")
  . . ;
- . . I %utVERB=2 N %utEnd,%utElapsed D  ; Time End
- . . . I $$GETSYS()=0  S %utEnd=$P($SYSTEM.Process.GetCPUTime(),",")+$P($SYSTEM.Process.GetCPUTime(),",",2)
- . . . I $$GETSYS()=47 S %utEnd=$ZGETJPI("","CPUTIM")*10
- . . . S %utElapsed=%utEnd-%utStart_"ms"
- . . ;
- . . I %utVERB=3 N %utEnd,%utElapsed D  ; Time End
- . . . I $$GETSYS()=0 S %utEnd=$P($NOW(),",",2) S %utElapsed=(%utEnd-%utStart)*1000,%utElapsed=%utElapsed_"ms"
- . . . I $$GETSYS()=47 N V S V=$$GTMVER(0),%utEnd=$s(V>6.2:$ZH,1:0) S %utElapsed=$$ZHDIF(%utStart,%utEnd)
+ . . ; End Time
+ . . N %utEnd,%utElapsed
+ . . I %utVERB=2 S %utEnd=$ZGETJPI("","CPUTIM")*10,%utElapsed=%utEnd-%utStart_"ms"
+ . . I %utVERB=3 S %utEnd=$ZH S %utElapsed=$$ZHDIF(%utStart,%utEnd)
  . . ;
  . . ; Run Teardown Code (only if present)
  . . S %ut("ENT")=$G(%ut("TEARDOWN"))
@@ -162,7 +157,6 @@ EN1(%utROU,%utLIST) ;
  D SETIO^%ut1
  W !!,"Ran ",%utLIST," Routine",$S(%utLIST>1:"s",1:""),", ",%ut("NENT")," Entry Tag",$S(%ut("NENT")>1:"s",1:"")
  W !,"Checked ",%ut("CHK")," test",$S(%ut("CHK")>1:"s",1:""),", with ",%ut("FAIL")," failure",$S(%ut("FAIL")'=1:"s",1:"")," and encountered ",%ut("ERRN")," error",$S(%ut("ERRN")'=1:"s",1:""),"."
- ; S ^TMP("%ut",$J,"UTVALS")=%utLIST_U_%ut("NENT")_U_%ut("CHK")_U_%ut("FAIL")_U_%ut("ERRN") ; JLI 150621 so programs running several sets of unit tests can generate totals
  D RESETIO^%ut1
  Q
  ; -- end EN1
@@ -177,7 +171,6 @@ VERBOSE(%utETRY,SUCCESS,%utVERB,%utElapsed) ; Say whether we succeeded or failed
  W ?RM
  I $G(SUCCESS) W "[OK]"
  E  W "[FAIL]"
- ;I 23[%utVERB,$G(%utElapsed)]"" W " ",%utElapsed
  I 23[%utVERB,$G(%utElapsed)]"" W " ",$J(%utElapsed,8,3),"ms"
  D RESETIO^%ut1
  Q
@@ -189,6 +182,12 @@ VERBOSE1(%utETRY,%utI) ; Print out the entry point info
  D RESETIO^%ut1
  Q
  ;
+TF(XTSTVAL,XTERMSG) ; Rename of CHKTF
+ D CHKTF($G(XTSTVAL),$G(XTERMSG))
+ QUIT
+tf(XTSTVAL,XTERMSG) ; Rename of CHKTF
+ D CHKTF($G(XTSTVAL),$G(XTERMSG))
+ QUIT
 CHKTF(XTSTVAL,XTERMSG) ; Entry point for checking True or False values
  ; ZEXCEPT: %utERRL,%utGUI - CREATED IN SETUP, KILLED IN END
  ; ZEXCEPT: %ut - NEWED IN EN
@@ -203,12 +202,18 @@ CHKTF(XTSTVAL,XTERMSG) ; Entry point for checking True or False values
  . . I $G(%ut("BREAK")) W !,"Breaking on False value"
  . . I $G(%ut("BREAK")) BREAK  ; Break upon False value
  . . Q
- . I XTSTVAL W "."
+ . I XTSTVAL,'%utVERB W "."
  . D RESETIO^%ut1
  . Q
  I $D(%utGUI),'XTSTVAL S %ut("CNT")=%ut("CNT")+1,@%ut("RSLT")@(%ut("CNT"))=%ut("LOC")_XTGUISEP_"FAILURE"_XTGUISEP_XTERMSG,%ut("FAIL")=%ut("FAIL")+1
  Q
  ;
+EQ(XTEXPECT,XTACTUAL,XTERMSG) ; Rename of CHKEQ
+ D CHKEQ($G(XTEXPECT),$G(XTACTUAL),$G(XTERMSG))
+ QUIT
+eq(XTEXPECT,XTACTUAL,XTERMSG) ; Rename of CHKEQ
+ D CHKEQ($G(XTEXPECT),$G(XTACTUAL),$G(XTERMSG))
+ QUIT
 CHKEQ(XTEXPECT,XTACTUAL,XTERMSG) ; Entry point for checking values to see if they are EQUAL
  ; ZEXCEPT: %utERRL,%utGUI -CREATED IN SETUP, KILLED IN END
  ; ZEXCEPT: %ut  -- NEWED IN EN
@@ -226,23 +231,29 @@ CHKEQ(XTEXPECT,XTACTUAL,XTERMSG) ; Entry point for checking values to see if the
  . . I $D(%ut("BREAK")) W !,"Breaking on non-equal values"
  . . I $D(%ut("BREAK")) BREAK  ; Break upon non-equal values
  . . Q
- . E  W "."
+ . I '%utVERB W "."
  . D RESETIO^%ut1
  . Q
  I $D(%utGUI),XTEXPECT'=XTACTUAL S %ut("CNT")=%ut("CNT")+1,@%ut("RSLT")@(%ut("CNT"))=%ut("LOC")_XTGUISEP_"FAILURE"_XTGUISEP_FAILMSG_XTERMSG,%ut("FAIL")=%ut("FAIL")+1
  Q
  ;
+fail(XTERMSG) ; Rename of FAIL
+ D FAIL($G(XTERMSG))
+ QUIT
 FAIL(XTERMSG) ; Entry point for generating a failure message
  D FAIL^%ut1($G(XTERMSG))
  Q
  ;
+succeed ; Rename of SUCCEED
+ D SUCCEED
+ QUIT
 SUCCEED ; Entry point for forcing a success (Thx David Whitten)
  ; ZEXCEPT: %utERRL,%utGUI - CREATED IN SETUP, KILLED IN END
  ; ZEXCEPT: %ut - NEWED IN EN
  ; Switch IO and write out the dot for activity
  I '$D(%utGUI) D
  . D SETIO^%ut1
- . W "."
+ . I '%utVERB W "."
  . D RESETIO^%ut1
  ;
  ; Increment test counter
@@ -321,7 +332,6 @@ GETSET(IEN,%utROU,%utLIST) ;  JLI 140731 - called from PICKSET, RUNSET, DOSET, G
  Q
  ;
 COV(NMSP,COVCODE,VERBOSITY) ; simply make it callable from %ut1 as well (along with other APIs) JLI 150101
- N %utIO S %utIO=$S($D(IO)#2:IO,1:$PRINCIPAL)
  D COV^%ut1(.NMSP,COVCODE,+$G(VERBOSITY)) ; see COV^%ut1 for description of arguments
  Q
  ;
@@ -363,7 +373,7 @@ LSTUTVAL(UTDATA) ; .SR - lists cumulative totals in UTDATA array
  Q
  ;
  ;
-GUISET(%utRSLT,XTSET) ; Entry point for GUI start with selected Test Set IEN - called by %ut-TEST GROUP LOAD rpc
+GUISET(%utRSLT,XTSET) ; Entry point for GUI start with selected Test Set IEN - called by utMUNIT-TEST GROUP LOAD rpc
  N %utROU,%utLIST,%ut
  D SETUT
  S %ut("RSLT")=$NA(^TMP("MUNIT-%utRSLT",$J)) K @%ut("RSLT")
@@ -373,7 +383,7 @@ GUISET(%utRSLT,XTSET) ; Entry point for GUI start with selected Test Set IEN - c
  S %utRSLT=%ut("RSLT")
  Q
  ;
-GUILOAD(%utRSLT,%utROUN) ; Entry point for GUI start with %utROUN containing primary routine name - called by %ut-TEST LOAD rpc
+GUILOAD(%utRSLT,%utROUN) ; Entry point for GUI start with %utROUN containing primary routine name - called by utMUNIT-TEST LOAD rpc
  N %utROU,%ut
  D SETUT
  S %ut("RSLT")=$NA(^TMP("MUNIT-%utRSLT",$J)) K @%ut("RSLT")
@@ -390,6 +400,8 @@ GETLIST(%utROU,%utLIST,%utRSLT) ; called from GUISET, GUILOAD
  D GETTREE^%ut1(.%utROU,%utLIST)
  F I=1:1 Q:'$D(%utROU(I))  S %utROUL(%utROU(I))=""
  S %utROUN="" F  S %utROUN=$O(%utROUL(%utROUN)) Q:%utROUN=""  D LOAD(%utROUN,.%utCNT,XTVALUE,XTCOMNT,.%utROUL)
+ ; 170705 JLI next line added to remove @ and ! indicators from tags for GUI run
+ S I="" F  S I=$O(@XTVALUE@(I)) Q:I=""  S %utLINE=^(I) I $P(%utLINE,U,2)="@" S @XTVALUE@(I)=$P(%utLINE,U)_U_$P(%utLINE,U,3,99)
  M @%utRSLT=@XTVALUE
  K @%utRSLT@("SHUTDOWN")
  K @%utRSLT@("STARTUP")
@@ -409,7 +421,7 @@ LOAD(%utROUN,%utNCNT,XTVALUE,XTCOMNT,%utROUL) ; called from GETLIST, and recursi
  F %utI=1:1 S LINE=$T(@("XTROU+"_%utI_"^"_%utROUN)) S XTX1=$P(LINE,";",3) Q:XTX1=""  S XTCOMNT=$P(LINE,";",4) I '$D(%utROUL(XTX1)) S %utROUL(XTX1)="" D LOAD(XTX1,.%utNCNT,XTVALUE,XTCOMNT,.%utROUL)
  Q
  ;
-GUINEXT(%utRSLT,%utLOC,XTGUISEP) ; Entry point for GUI execute next test - called by %ut-TEST NEXT rpc
+GUINEXT(%utRSLT,%utLOC,XTGUISEP) ; Entry point for GUI execute next test - called by utMUNIT-TEST NEXT rpc
  ; XTGUISEP - added 110719 to provide for changing separator for GUI
  ;            return from ^ to another value ~~^~~  so that data returned
  ;            is not affected by ^ values in the data - if not present
@@ -455,7 +467,6 @@ GUINEXT(%utRSLT,%utLOC,XTGUISEP) ; Entry point for GUI execute next test - calle
  . D @("TEARDOWN^"_%utROUT)
  . Q
  S @%ut("RSLT")@(1)=%ut("CHK")_XTGUISEP_(%ut("CNT")-1-%utERR)_XTGUISEP_%utERR
- K ^TMP("%ut",$J,"UTVALS")
  Q
  ;
 GTMVER(X) ;return OS version, X=1 - return OS
@@ -474,3 +485,4 @@ ZHDIF(%ZH0,%ZH1) ;Display dif of two $ZH's
  ;
  N %ZH2 S %ZH2=T1-T0*1000
  QUIT %ZH2
+

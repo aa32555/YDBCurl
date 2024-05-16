@@ -1,3 +1,4 @@
+@install_dir@/libcurl.so
 init:       gtm_status_t curl_init()
 cleanup:    gtm_status_t curl_cleanup()
 addHeader:  gtm_status_t curl_add_header(I:gtm_char_t*)

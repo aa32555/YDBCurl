@@ -148,7 +148,8 @@ THGET ; @TEST do GET https://example.com with headers
  d CHKEQ^%ut(status,0)
  d CHKEQ^%ut(sss,200)
  d CHKTF^%ut(zzz["Example Domain")
- d CHKTF^%ut(headers["etag:")
+ ; tag: can be check for both etag and Etag
+ d CHKTF^%ut(headers["tag:")
  d &libcurl.cleanup
  quit
  ;
@@ -169,7 +170,10 @@ TB100 ; @TEST curl 100 bytes of binary data
  d CHKEQ^%ut(status,0)
  d &libcurl.cleanup
  d CHKEQ^%ut(sss,200)
- d CHKTF^%ut($l(zzz)=100)
+ ; VIEW "NOBADCHAR" disables the generation of an error when character-oriented functions encounter malformed byte sequences (illegal characters) 
+ VIEW "NOBADCHAR"
+ d CHKTF^%ut($zl(zzz)=100)
+ VIEW "BADCHAR"
  quit
  ;
 TB1M ; @TEST curl with >1M bytes of binary data
@@ -211,12 +215,12 @@ TCERT1 ; @TEST Test TLS with a client certificate no key password
  n sss,zzz,ec
  d &libcurl.init
  n status s status=$&libcurl.do(.sss,.zzz,"GET","https://prod.idrix.eu/secure/")
- d CHKTF^%ut(zzz["No SSL client certificate presented")
+ d CHKTF^%ut(zzz["Error: No TLS client certificate presented",1)
  d &libcurl.cleanup
  d &libcurl.init
  d &libcurl.clientTLS("/tmp/client.pem","/tmp/client.key")
  n status s status=$&libcurl.do(.sss,.zzz,"GET","https://prod.idrix.eu/secure/")
- d CHKTF^%ut(zzz["SSL Authentication OK!")
+ d CHKTF^%ut(zzz["TLSv1.3 Authentication OK!",2)
  d &libcurl.cleanup
  zsy "rm /tmp/mycert* /tmp/client*"
  quit
@@ -230,7 +234,7 @@ TCERT2 ; @TEST Test TLS with a client certifiate with key password
  S %CMD="openssl req -new -key /tmp/mycert.key -passin pass:monkey1234 -subj '/C=US/ST=Washington/L=Seattle/CN=www.smh101.com' -out /tmp/mycert.csr"
  ZSY %CMD
  ;
- S %CMD="openssl req -x509 -days 365 -sha256 -in /tmp/mycert.csr -key /tmp/mycert.key -passin pass:monkey1234 -out /tmp/mycert.pem"
+ S %CMD="openssl req -x509 -days 365 -sha256 -in /tmp/mycert.csr -key /tmp/mycert.key -passin pass:monkey1234 -out /tmp/mycert.pem -copy_extensions=none"
  ZSY %CMD
  ;
  n status
