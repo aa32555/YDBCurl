@@ -134,7 +134,7 @@ TPAYMIME ; @TEST Test Payload with mime type
 TTO ; @TEST do GET https://example.com with full timeout in seconds
  n sss,zzz
  d &libcurl.init
- n status s status=$&libcurl.do(.sss,.zzz,"GET","https://example.com",,,5)
+ n status s status=$&libcurl.do(.sss,.zzz,"GET","https://example.com",,,10)
  d CHKEQ^%ut(status,0)
  d CHKEQ^%ut(sss,200)
  d CHKTF^%ut(zzz["Example Domain")
