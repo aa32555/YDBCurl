@@ -38,6 +38,8 @@ project(ydbcurl
 	VERSION 1.0.0
 )
 
+configure_file(libcurl.manifest.json.in libcurl.manifest.json @ONLY)
+
 # Find YottaDB and get Install Destination
 find_package(YOTTADB REQUIRED)
 message(STATUS "Install Location: ${YOTTADB_PLUGIN_PREFIX}")
@@ -60,7 +62,6 @@ install(TARGETS curl DESTINATION ${YOTTADB_C_PLUGIN_DIR})
 set(m_sources r/_ut.m r/_ut1.m r/libcurlPluginTests.m)
 add_ydb_library(libcurltest SOURCES ${m_sources})
 
-
 # Handle the .xc file
 # Runtime version
 set(install_dir ${YOTTADB_PLUGIN_PREFIX})
@@ -76,6 +77,8 @@ set(install_dir ${CMAKE_CURRENT_BINARY_DIR})
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/libcurl.xc.in
   ${CMAKE_CURRENT_BINARY_DIR}/libcurl_test.xc
 )
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libcurl.manifest.json DESTINATION ${YOTTADB_C_PLUGIN_DIR})
 
 # Testing
 enable_testing()

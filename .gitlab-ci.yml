@@ -35,6 +35,7 @@ ydbcurl-test-ubuntu:
   script:
     - docker build -t libcurl-ubuntu .
     - docker run --rm libcurl-ubuntu
+  interruptible: true
 
 ydbcurl-test-rocky:
   image: docker:latest
@@ -42,3 +43,4 @@ ydbcurl-test-rocky:
   script:
     - docker build -t libcurl-rocky -f Dockerfile-rocky .
     - docker run --rm libcurl-rocky
+  interruptible: true

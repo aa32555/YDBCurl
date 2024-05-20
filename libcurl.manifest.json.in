@@ -1,0 +1,5 @@
+{
+  "description": "YottaDB libcurl plugin",
+  "version": "@ydbcurl_VERSION@",
+  "vendor": "YottaDB"
+}

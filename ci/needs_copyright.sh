@@ -37,6 +37,7 @@ skiplist="LICENSE
 	README.md
 	r/_ut.m
 	r/_ut1.m
+	libcurl.manifest.json.in
 	"
     for skipfile in $skiplist; do
 	if [ "$file" = "$skipfile" ]; then
