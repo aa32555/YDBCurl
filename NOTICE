@@ -1,10 +1,9 @@
-All code here written by Sam Habiel (c) 2018.
+Original code Sam Habiel (c) 2018,2023-2024.
+Since move of code to YottaDB LLC Organization (c) 2024.
 
 Based on source code written by Daniel Stenberg.
 
-Copyright notice:
-
-
+Copyright notice for Curl Project:
 
 COPYRIGHT AND PERMISSION NOTICE
 
@@ -28,4 +27,3 @@ OR OTHER DEALINGS IN THE SOFTWARE.
 Except as contained in this notice, the name of a copyright holder shall not be
 used in advertising or otherwise to promote the sale, use or other dealings in
 this Software without prior written authorization of the copyright holder.
-
