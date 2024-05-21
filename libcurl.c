@@ -1,5 +1,5 @@
 /***************************************************************************
- * Copyright (c) 2018,2023-2024 Sam Habiel
+ * Copyright (c) 2018-2024 Sam Habiel
  * Copyright (c) 2024 YottaDB LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");

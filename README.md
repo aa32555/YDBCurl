@@ -81,7 +81,7 @@ Install the project...
 -- Installing: /opt/yottadb/current/plugin/libcurl.xc 
 ```
 
-After installation, you need to add an environment variable to your GT.M/YottaDB
+After installation, you need to add an environment variable to your YottaDB/GT.M
 install like this in order to start using the library: 
 ```
 export ydb_xc_libcurl=${ydb_dist}/plugin/libcurl.xc
@@ -284,7 +284,7 @@ both `httpStatus` and `output` do get set.
 `output` is a textual description of `httpStatus`.
 
 ## External Dependencies
-This one is pretty obvious: This library uses libcurl; and runs on GT.M or YottaDB.
+This one is pretty obvious: This library uses libcurl; and runs on YottaDB or GT.M.
 
 ## Unit Tests
 Running `make test` will run the Unit Tests (Enable verbose output with `make test ARGS="-V"`)

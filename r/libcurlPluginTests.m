@@ -1,6 +1,6 @@
 libcurlPluginTests ; OSE/SMH - Libcurl Tests;2018-12-04  11:30 AM
  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
- ; Copyright (c) 2018,2023-2024 Sam Habiel
+ ; Copyright (c) 2018-2024 Sam Habiel
  ; Copyright (c) 2024 YottaDB LLC
  ;
  ; Licensed under the Apache License, Version 2.0 (the "License");
