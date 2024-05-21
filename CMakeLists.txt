@@ -33,6 +33,8 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
+option(ENABLE_ASAN "Enable address sanitizer in build?" OFF)
+
 project(ydbcurl
 	LANGUAGES C M
 	VERSION 1.0.0
@@ -50,6 +52,17 @@ if(CURL_FOUND)
     message(STATUS "Found CURL version: ${CURL_VERSION_STRING}")
     message(STATUS "Using CURL include dir(s): ${CURL_INCLUDE_DIRS}")
     message(STATUS "Using CURL lib(s): ${CURL_LIBRARIES}")
+endif()
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -pedantic")
+
+if(ENABLE_ASAN)
+	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fsanitize-recover=address")
+	execute_process(
+		COMMAND gcc -print-file-name=libasan.so
+		OUTPUT_VARIABLE LIBASAN_PATH
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
 endif()
 
 # Install CURL Shared Library
@@ -85,12 +98,18 @@ enable_testing()
 add_test(libcurl_test ${CMAKE_M_COMPILER} -run libcurlPluginTests)
 set_tests_properties(libcurl_test PROPERTIES FAIL_REGULAR_EXPRESSION "FAIL")
 set_tests_properties(libcurl_test PROPERTIES
-	ENVIRONMENT "ydb_xc_libcurl=${CMAKE_CURRENT_BINARY_DIR}/libcurl_test.xc;ydb_routines=${CMAKE_CURRENT_BINARY_DIR}/libcurltest.so ${mumps_dir}/libyottadbutil.so;ydb_chset=M")
+	ENVIRONMENT "ydb_xc_libcurl=${CMAKE_CURRENT_BINARY_DIR}/libcurl_test.xc;ydb_routines=${CMAKE_CURRENT_BINARY_DIR}/libcurltest.so ${mumps_dir}/libyottadbutil.so;ydb_chset=M;ASAN_OPTIONS=detect_leaks=0")
 
 if(EXISTS ${mumps_dir}/utf8)
 	add_test(libcurl_test_utf8 ${CMAKE_M_COMPILER} -run libcurlPluginTests)
 	set_tests_properties(libcurl_test_utf8 PROPERTIES FAIL_REGULAR_EXPRESSION "FAIL")
 	set_tests_properties(libcurl_test_utf8 PROPERTIES
-		ENVIRONMENT "ydb_xc_libcurl=${CMAKE_CURRENT_BINARY_DIR}/libcurl_test.xc;ydb_routines=${CMAKE_CURRENT_BINARY_DIR}/utf8/libcurltest.so ${mumps_dir}/utf8/libyottadbutil.so;ydb_chset=UTF-8;ydb_icu_version=${ydb_icu_version}")
+		ENVIRONMENT "ydb_xc_libcurl=${CMAKE_CURRENT_BINARY_DIR}/libcurl_test.xc;ydb_routines=${CMAKE_CURRENT_BINARY_DIR}/utf8/libcurltest.so ${mumps_dir}/utf8/libyottadbutil.so;ydb_chset=UTF-8;ydb_icu_version=${ydb_icu_version};ASAN_OPTIONS=detect_leaks=0")
+	if(ENABLE_ASAN)
+		set_property(TEST libcurl_test_utf8 APPEND PROPERTY ENVIRONMENT ";LD_PRELOAD=${LIBASAN_PATH}")
+	endif()
 endif()
 
+if(ENABLE_ASAN)
+	set_property(TEST libcurl_test APPEND PROPERTY ENVIRONMENT ";LD_PRELOAD=${LIBASAN_PATH}")
+endif()

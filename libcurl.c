@@ -22,6 +22,9 @@
 #include <curl/curl.h>
 #include "gtmxc_types.h"
 
+/* Used to tell the compiler we intentionally are not using a parameter */
+#define UNUSED(x) (void)(x)
+
 struct MemoryStruct {
   char *memory;
   size_t size;
@@ -81,7 +84,10 @@ gtm_status_t curl_init()
 
 gtm_status_t curl_add_header(int argc, gtm_char_t *header)
 {
-  hs = curl_slist_append(hs, (char* )header);
+  if (argc >= 1) {
+    hs = curl_slist_append(hs, (char* )header);
+  }
+
   return (gtm_status_t)0;
 }
 
@@ -108,10 +114,12 @@ gtm_status_t curl_client_tls(int argc,
     gtm_char_t *privateKeyPassword,    /* 3 */
     gtm_char_t *CABundleFile)          /* 4 */
 {
-  /* first two arguments required - Certificate and Key */
-  curl_easy_setopt(curl_handle, CURLOPT_SSLCERT, (char *)certFile);
-  curl_easy_setopt(curl_handle, CURLOPT_SSLKEY,  (char *)privateKeyFile);
-  curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 1);
+  if (argc >= 2) {
+    /* first two arguments required - Certificate and Key */
+    curl_easy_setopt(curl_handle, CURLOPT_SSLCERT, (char *)certFile);
+    curl_easy_setopt(curl_handle, CURLOPT_SSLKEY,  (char *)privateKeyFile);
+    curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 1);
+  }
 
   /* Key password */
   if (argc >= 3 && strlen(privateKeyPassword))
@@ -131,8 +139,11 @@ gtm_status_t curl_client_tls(int argc,
 /* Server self-signed certificate support */
 gtm_status_t curl_server_ca(int argc, gtm_char_t *CABundleFile)
 {
-  curl_easy_setopt(curl_handle, CURLOPT_CAINFO, (char *)CABundleFile);
-  curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 1);
+  if (argc >= 1) {
+    curl_easy_setopt(curl_handle, CURLOPT_CAINFO, (char *)CABundleFile);
+    curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 1);
+  }
+
   return (gtm_status_t)0;
 }
  
@@ -141,14 +152,21 @@ gtm_status_t curl_auth(int argc, gtm_char_t *auth_type, gtm_char_t *unpw)
 {
   /* Right now, there is nothing else besides basic supported; so I am
    * not even checking the auth type parameter */
-  curl_easy_setopt(curl_handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
-  curl_easy_setopt(curl_handle, CURLOPT_USERPWD, (char *)unpw);
+  UNUSED(auth_type); 
+  if (argc >= 2) {
+    curl_easy_setopt(curl_handle, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+    curl_easy_setopt(curl_handle, CURLOPT_USERPWD, (char *)unpw);
+  }
+
   return (gtm_status_t)0;
 }
 
 gtm_status_t curl_connect_timeout_ms(int argc, long ms)
 {
-  curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT_MS, ms);
+  if (argc >= 1) {
+    curl_easy_setopt(curl_handle, CURLOPT_CONNECTTIMEOUT_MS, ms);
+  }
+
   return (gtm_status_t)0;
 }
 
