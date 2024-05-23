@@ -236,11 +236,11 @@ gtm_status_t curl_do(int argc,
   /* Mime type */
   if (argc >= 6 && strlen((char *)mime))
   {
-    char header[100];
+    char header[115];
     char* content_type="Content-Type: ";
     int content_type_len=strlen(content_type);
     strcpy(header, content_type);
-    strncat(header, (char *)mime, 100 - content_type_len - 1); /* -1 for null term */
+    strncat(header, (char *)mime, 115 - content_type_len - 1); /* -1 for null term */
     hs = curl_slist_append(hs, header);
   }
   if (hs) curl_easy_setopt(curl_handle, CURLOPT_HTTPHEADER, hs);

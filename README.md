@@ -11,7 +11,7 @@ The following features in libcurl have been implemented:
  * All HTTP verbs are supported
  * TLS supported - normal; with client certificates (w or w/o passwords); and with addition CA bundles. All TLS versions that curl supports are supported.
  * HTTP Basic Auth support; none others right now.
- * Can send in different mime types
+ * Can send in different mime types (mime type cannot be larger than 100 characters, otherwise it will be truncated)
  * Can adjust full timeout (seconds) and connect timeout (milliseconds)
  * Can get back output headers
  * Ability to reuse the same connection(s) for multiple HTTP requests

@@ -131,6 +131,23 @@ TPAYMIME ; @TEST Test Payload with mime type
  D CHKTF^%ut(zzz[R)
  QUIT
  ;
+TMIME100 ; @TEST Test mime type 100 characters long
+ n sss,zzz
+ N PAYLOAD,RTN,H,RET
+ N CRLF S CRLF=$C(13,10)
+ N R S R=$R(123423421234)
+ S PAYLOAD="{""test"":"_R_"}"
+ S TYPE=""
+ F I=1:1:116 S TYPE=TYPE_$C(65+$R(26)) ; Create random string 116 bytes long for mime type
+ n status s status=$&libcurl.curl(.sss,.zzz,"POST","https://httpbin.org/post",PAYLOAD,TYPE)
+ d CHKEQ^%ut(status,0)
+ d CHKEQ^%ut(sss,200)
+ ; Check if first 100 characters from input matched in first 100 characters in result
+ D CHKTF^%ut(zzz[$extract(TYPE,1,100))
+ ; This test is for checking that character 101 is trucated because we only support 100 characters long for mime type
+ D CHKTF^%ut(zzz'[$extract(TYPE,1,101))
+ QUIT
+ ;
 TTO ; @TEST do GET https://example.com with full timeout in seconds
  n sss,zzz
  d &libcurl.init
