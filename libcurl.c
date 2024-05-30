@@ -25,6 +25,8 @@
 /* Used to tell the compiler we intentionally are not using a parameter */
 #define UNUSED(x) (void)(x)
 
+#define INITERROR "Call .init first before .do"
+
 struct MemoryStruct {
   char *memory;
   size_t size;
@@ -170,11 +172,29 @@ gtm_status_t curl_connect_timeout_ms(int argc, long ms)
   return (gtm_status_t)0;
 }
 
+gtm_status_t curl_verify_peer(int argc, int option)
+{
+  if (argc >= 1) {
+    if (option == 0) {
+      curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0);
+    } else if (option == 1) {
+      curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 1);
+    } else {
+      return (gtm_status_t)1;
+    }
+  }else {
+     return (gtm_status_t)1;
+  }
+
+  return (gtm_status_t)0;
+}
+
 /* Perform the curl operation */
 /* Return: 
  *   0 - ok,
  *   255 - output not compatible with plugin,
- *   -1 input arguments error */
+ *   -1 input arguments error
+ *   -2 curl_handle is null when doing do operation (not init or cleanup before do statement) */
 gtm_status_t curl_do(int argc, 
     gtm_long_t* http_status,      /* 1 */
     gtm_string_t *output,         /* 2 */
@@ -191,6 +211,14 @@ gtm_status_t curl_do(int argc,
   /* Must have at least 4 arguments */
   if(argc < 4) return (gtm_status_t)-1;
 
+   /* Return -2 if curl_handle == NULL (Cleanup or not initialize properly before .do
+   * This prevent SIGSEGV for happening */
+  if(curl_handle == NULL) {
+	  *http_status = -255;
+	  memcpy(output->address, INITERROR, sizeof(INITERROR) - 1);
+	  output->length = sizeof(INITERROR) - 1;
+	  return (gtm_status_t)-2;
+  }
   /* curl's body return */
   struct MemoryStruct return_body;
   return_body.memory = malloc(1);  /* will be grown as needed by the realloc above */

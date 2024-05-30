@@ -109,6 +109,7 @@ libcurl.addHeader("header: text")
 libcurl.auth("Basic","username:password")
 libcurl.clientTLS("path to cert","path to key","key password","path to CA Bundle")
 libcurl.conTimeoutMS(milliseconds)
+libcurl.TLSVerifyPeer(boolean)
 ```
 
 ## Usage
@@ -261,6 +262,19 @@ To trust a specific certificate, using `.serverCA`, e.g.:
  do &libcurl.cleanup
 ```
 
+If you want to enable/disable peer verification you can use `.TLSVerifyPeer` to do it. 
+
+This function have 2 options : 0 for disable and 1 for enable. e.g.:
+
+```
+ d &libcurl.init
+ d &libcurl.TLSVerifyPeer(0)
+ s status=$&libcurl.do(.sss,.zzz,"GET","https://self-signed.badssl.com/")
+ d &libcurl.cleanup
+```
+Peer verification is on by default, and we don't recommend turning it off unless you are just testing things.
+Use .serverCA instead to trust a specific server.
+
 ## Error Codes
 The only way to trap errors is with an M error trap, as any error status runs
 the error trap. In the example below, `status` actually NEVER gets set, but
@@ -327,6 +341,8 @@ Certificate request self-signature ok
 subject=C = US, ST = Washington, L = Seattle, CN = www.smh101.com
 --------------------------------------------------------------  [OK] 2356.622ms
 TCERT2 - Test TLS with a client certifiate with key password--  [OK]  486.513ms
+TDOB4CLEANUP - .do after .cleanup-----------------------------  [OK]    0.098ms
+TPEERVER - Setting peer verification--------------------------  [OK] 2998.132ms
 ```
 ## Future Work
 

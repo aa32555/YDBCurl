@@ -287,3 +287,60 @@ TCERT2 ; @TEST Test TLS with a client certifiate with key password
  zsy "rm /tmp/mycert* /tmp/client*"
  ;
  quit
+TDOB4CLEANUP ; @Test .do after .cleanup
+ ; Previously, this scenario caused a SIGSEGV
+ n sss,zzz
+ d &libcurl.init
+ d &libcurl.cleanup
+ do
+ . n $et s $et="set $ec="""""
+ . s status=$&libcurl.do(.sss,.zzz,"GET","https://example.com")
+ d CHKEQ^%ut(sss,-255)
+ d CHKEQ^%ut($data(status),0)
+ quit
+ ;
+TPEERVER ; @TEST Setting peer verification
+ n sss,zzz,ec
+ ; Default behaviour (Verify peer enabled as default)
+ d &libcurl.init
+ do
+ . n $et s $et="set $ec="""""
+ . s status=$&libcurl.do(.sss,.zzz,"GET","https://self-signed.badssl.com/")
+ d &libcurl.cleanup
+ d CHKTF^%ut(zzz["eer certificate")
+ ;
+ ; Disable verify peer
+ d &libcurl.init
+ d &libcurl.TLSVerifyPeer(0)
+ s status=$&libcurl.do(.sss,.zzz,"GET","https://self-signed.badssl.com/")
+ d &libcurl.cleanup
+ d CHKEQ^%ut(sss,200)
+ d CHKTF^%ut(zzz["self-signed.badssl.com")
+ ; 
+ ; Enable verify peer
+ d &libcurl.init
+ d &libcurl.TLSVerifyPeer(1)
+ do
+ . n $et s $et="set $ec="""""
+ . s status=$&libcurl.do(.sss,.zzz,"GET","https://self-signed.badssl.com/")
+ d &libcurl.cleanup
+ d CHKTF^%ut(zzz["eer certificate")
+ ;
+ ; Input garbage value (String)
+ ; Note : String means 0 in M so this is like we're using d &libcurl.TLSVerifyPeer(0)
+ d &libcurl.init
+ d &libcurl.TLSVerifyPeer("HELLO123456")
+ s status=$&libcurl.do(.sss,.zzz,"GET","https://self-signed.badssl.com/")
+ d &libcurl.cleanup
+ d CHKEQ^%ut(sss,200)
+ d CHKTF^%ut(zzz["self-signed.badssl.com")
+ ;
+ ; Input garbage value (Number)
+ d &libcurl.init
+ d &libcurl.TLSVerifyPeer(-123123636363)
+ do
+ . n $et s $et="set $ec="""""
+ . s status=$&libcurl.do(.sss,.zzz,"GET","https://self-signed.badssl.com/")
+ d &libcurl.cleanup
+ d CHKTF^%ut(zzz["eer certificate")
+ quit
