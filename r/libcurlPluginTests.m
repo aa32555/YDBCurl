@@ -344,3 +344,23 @@ TPEERVER ; @TEST Setting peer verification
  d &libcurl.cleanup
  d CHKTF^%ut(zzz["eer certificate")
  quit
+
+TPEERVER2 ; @TEST Peer verification - Wrong host name
+ ; Disable verify peer
+ d &libcurl.init
+ d &libcurl.TLSVerifyPeer(0)
+ s status=$&libcurl.do(.sss,.zzz,"GET","https://wrong.host.badssl.com/")
+ d &libcurl.cleanup
+ d CHKEQ^%ut(sss,200)
+ d CHKTF^%ut(zzz["wrong.host.badssl.com")
+ ; 
+ ; Enable verify peer
+ d &libcurl.init
+ d &libcurl.TLSVerifyPeer(1)
+ do
+ . n $et s $et="set $ec="""""
+ . s status=$&libcurl.do(.sss,.zzz,"GET","https://wrong.host.badssl.com/")
+ d &libcurl.cleanup
+ d CHKTF^%ut(zzz["eer certificate")
+ ;
+ quit

@@ -343,6 +343,7 @@ subject=C = US, ST = Washington, L = Seattle, CN = www.smh101.com
 TCERT2 - Test TLS with a client certifiate with key password--  [OK]  486.513ms
 TDOB4CLEANUP - .do after .cleanup-----------------------------  [OK]    0.098ms
 TPEERVER - Setting peer verification--------------------------  [OK] 2998.132ms
+TPEERVER2 - Peer verification - Wrong host name---------------  [OK] 1464.416ms
 ```
 ## Future Work
 

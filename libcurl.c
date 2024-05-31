@@ -177,8 +177,10 @@ gtm_status_t curl_verify_peer(int argc, int option)
   if (argc >= 1) {
     if (option == 0) {
       curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 0);
+      curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 0);
     } else if (option == 1) {
       curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYPEER, 1);
+      curl_easy_setopt(curl_handle, CURLOPT_SSL_VERIFYHOST, 1);
     } else {
       return (gtm_status_t)1;
     }
