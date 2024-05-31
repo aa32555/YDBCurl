@@ -37,7 +37,7 @@ option(ENABLE_ASAN "Enable address sanitizer in build?" OFF)
 
 project(ydbcurl
 	LANGUAGES C M
-	VERSION 1.1.0
+	VERSION 1.1.1
 )
 
 configure_file(libcurl.manifest.json.in libcurl.manifest.json @ONLY)
