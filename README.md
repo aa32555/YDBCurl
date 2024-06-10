@@ -30,8 +30,19 @@ $ sudo yum install -y git cmake make pkg-config libicu-devel libcurl-devel gcc
 ```
 
 ## Install
-YottaDB must be installed and available before installing YDBCurl plugin. https://yottadb.com/product/get-started/ 
-has instructions on installing YottaDB. After that, do the following steps to install YDBCurl plugin:
+YottaDB must be installed and available before installing YDBCurl plugin.
+https://yottadb.com/product/get-started/ has instructions on installing
+YottaDB.
+
+For end users, adding `--curl` as an argument for
+[`ydbinstall.sh`](https://docs.yottadb.com/AdminOpsGuide/installydb.html#ydbinstall-script)
+will install this plugin; for example:
+
+```
+./ydbinstall.sh --installdir /path/to/existing/yottadb --plugins-only --curl
+```
+
+For developers, the following are the steps to install YDBCurl plugin:
 ```
 $ cd /tmp
 $ git clone https://gitlab.com/YottaDB/Util/YDBCurl.git
@@ -87,6 +98,9 @@ install like this in order to start using the library:
 export ydb_xc_libcurl=${ydb_dist}/plugin/libcurl.xc
 ```
 
+If you use [`ydb_env_set`](https://docs.yottadb.com/AdminOpsGuide/basicops.html#ydb-env-set),
+this will be done automatically for you.
+
 ## External Documentation
 This project relies on libcurl (https://curl.haxx.se/).
 
@@ -97,8 +111,10 @@ $&libcurl.init`. Unless indicated with a dot in front of a variable, all
 parameters are free text values passed by value (except timeout, which is an
 integer). The return value for extrinsic function is either a zero when the
 call succeeds; otherwise, it is not returned at all; instead, an M error trap
-is triggered. Therefore, the examples will not show use of calling the function
-as an extrinsic since the return value is useless.
+is triggered.
+
+Once you get familiar with using the library, read the section on Error Handling
+below.
 
 ```
 libcurl.curl(.httpStatusCode,.httpOutput,"HTTP VERB","URL","PAYLOAD","mime/type",timeout,.output headers)
@@ -175,20 +191,21 @@ If you need to supply a mime type (as curl defaults to `application/x-www-form-u
 ```
 
 ### Timeout
-Full Timeout can be passed as the 7th parameter.
+Full Timeout (for all sending and receiving operations in **seconds**) can be
+passed as the 7th parameter.
 
 ```
  do &libcurl.curl(.httpStatus,.output,"GET","https://example.com",,,5)
 ```
 
-Connection timeout can be set after init:
+Connection timeout (in **milliseconds**) can be set after init:
 
 ```
  do &libcurl.init
  do
  . new $et set $et="set $ec="""""
  . do &libcurl.conTimeoutMS(1)
- . do &libcurl.do(.httpStatus,.output,"GET","https://example.com")
+ . set status=$&libcurl.do(.httpStatus,.output,"GET","https://example.com")
  do &libcurl.cleanup
 ```
 
@@ -275,10 +292,21 @@ This function have 2 options : 0 for disable and 1 for enable. e.g.:
 Peer verification is on by default, and we don't recommend turning it off unless you are just testing things.
 Use .serverCA instead to trust a specific server.
 
-## Error Codes
-The only way to trap errors is with an M error trap, as any error status runs
-the error trap. In the example below, `status` actually NEVER gets set, but
-both `httpStatus` and `output` do get set.
+## Error Handling
+YottaDB has a strange convention (kept for historical reasons now) in that a
+call that returns an error code for an extrinsic function will trigger an M error
+if it's called as an extrinsic, but will not trigger an error if called as a
+function. For example:
+
+```
+do &libcurl.curl(.httpStatusCode,.httpOutput,"GET","https://example.com")     <-- no error in trap; error only shown in httpStatusCode
+set x=$&libcurl.curl(.httpStatusCode,.httpOutput,"GET","https://example.com") <-- error in trap; also in httpStatusCode
+```
+
+What's even odder is that in this example `x` actually never gets set.
+
+It's up to you how to trap errors. In the example below, `status` is not set,
+but both `httpStatus` and `output` do get set.
 
 ```
  do &libcurl.init
