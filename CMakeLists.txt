@@ -54,7 +54,7 @@ if(CURL_FOUND)
     message(STATUS "Using CURL lib(s): ${CURL_LIBRARIES}")
 endif()
 
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror -pedantic")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Werror")
 
 if(ENABLE_ASAN)
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=address -fsanitize-recover=address")
